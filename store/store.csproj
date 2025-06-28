@@ -167,8 +167,11 @@
     <Content Include="admin.aspx" />
     <Content Include="distributor.aspx" />
     <Content Include="index.aspx" />
+    <Content Include="stylesanjavascript\admin.js" />
     <Content Include="stylesanjavascript\index.css" />
     <Content Include="stylesanjavascript\JavaScript.js" />
+    <Content Include="stylesanjavascript\JavaScript1.js" />
+    <Content Include="stylesanjavascript\StyleSheet1.css" />
     <Content Include="Web.config" />
   </ItemGroup>
   <ItemGroup>
@@ -201,6 +204,7 @@
       <DependentUpon>index.aspx</DependentUpon>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Content Include="stylesanjavascript\admin.css" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
