@@ -180,79 +180,106 @@
     </div>
 
   <script>
-      document.getElementById("addproductform").addEventListener("submit", function (e) {
+      // Move this outside the event handler
+      function getBase64(file) {
+          return new Promise((resolve, reject) => {
+              const reader = new FileReader();
+              reader.readAsDataURL(file);
+              reader.onload = () => resolve(reader.result);
+              reader.onerror = error => reject(error);
+          });
+      }
+
+      document.getElementById("addproductform").addEventListener("submit", async function (e) {
           e.preventDefault();
+
+          // Get form values
           const name = document.getElementById("name").value.trim();
           const category = document.getElementById("category").value;
           const description = document.getElementById("description").value.trim();
           const price = document.getElementById("price").value;
           const imageFile = document.getElementById("image").files[0];
 
+          // Validate inputs
           if (!name || !category || !description || !price) {
               return showToast("All fields are required.", "warning");
           }
+
+          // Validate price format
+          if (isNaN(price) || parseFloat(price) <= 0) {
+              return showToast("Please enter a valid price.", "warning");
+          }
+
           let base64Image = "";
-
-          const file = this.files[0];
-              if (file) {
-                  const reader = new FileReader();
-                  reader.onloadend = function () {
-                      base64Image = reader.result;
-                  };
-                  reader.readAsDataURL(file);
+          if (imageFile) {
+              try {
+                  base64Image = await getBase64(imageFile);
+              } catch (error) {
+                  console.error("Image conversion error:", error);
+                  return showToast("Error processing image.", "error");
               }
-         
-
-          console.log(base64Image);
-
+          }
           const product = {
               name,
               description,
               category,
-              price,
+              price: parseFloat(price).toFixed(2),
               image: base64Image
           };
-         
 
-          
-
-          const tbody = document.getElementById("productTableBody");
-          const tr = document.createElement("tr");
-
-          tr.innerHTML = `
-            <td>${product.image ? `<img src="${product.image}" class="product-image" />` : 'No Image'}</td>
-            <td>${product.name}</td>
-            <td>${product.category}</td>
-            <td>${product.description}</td>
-            <td>₹${product.price}</td>
-            <td>
-                <button class="upload-btn">Upload</button>
-                <button class="delete-btn">Delete</button>
-            </td>`;
-
-          tbody.appendChild(tr);
-
-          // Attach event to Upload button
-          const uploadBtn = tr.querySelector(".upload-btn");
-          uploadBtn.addEventListener("click", function () {
-              uploadToServer(product, uploadBtn);
-          });
-
-          // Attach event to Delete button
-          const deleteBtn = tr.querySelector(".delete-btn");
-          deleteBtn.addEventListener("click", function () {
-              tr.remove();
-              showToast("Product removed.", "info");
-          });
-
+          addProductToTable(product);
           document.getElementById("addproductform").reset();
           document.getElementById("addproductform").style.display = "none";
           showToast("Product added. Click Upload to save.", "success");
       });
 
+      function addProductToTable(product) {
+          const tbody = document.getElementById("productTableBody");
+          const tr = document.createElement("tr");
+          tr.dataset.productName = encodeURIComponent(product.name);
+
+          tr.innerHTML = `
+        <td>${product.image ? `<img src="${product.image}" class="product-image" />` : 'No Image'}</td>
+        <td>${product.name}</td>
+        <td>${product.category}</td>
+        <td>${product.description}</td>
+        <td>₹${product.price}</td>
+        <td>
+            <button class="upload-btn">Upload</button>
+            <button class="delete-btn">Delete</button>
+        </td>`;
+
+          tbody.appendChild(tr);
+
+          // Attach event to Upload button
+          tr.querySelector(".upload-btn").addEventListener("click", function () {
+              uploadToServer(product, this);
+          });
+
+          // Attach event to Delete button
+          tr.querySelector(".delete-btn").addEventListener("click", function () {
+              tr.remove();
+              showToast("Product removed.", "info");
+          });
+      }
+
       function uploadToServer(product, button) {
           button.disabled = true;
           button.textContent = "Uploading...";
+          button.classList.add("uploading");
+
+          // Create the exact structure the server expects
+          const requestData = {
+              name: product.name,
+              description: product.description,
+              category: product.category,
+              price: product.price
+          };
+
+          // Only add image if it exists and is valid
+          if (product.image && product.image.startsWith('data:image')) {
+              requestData.image = product.image;
+          }
 
           fetch("addproduct.aspx/AddProduct", {
               method: "POST",
@@ -260,35 +287,32 @@
                   "Content-Type": "application/json",
               },
               body: JSON.stringify({
-                  productData: {
-                      name: product.name,
-                      description: product.description,
-                      category: product.category,
-                      price: product.price,
-                      image: product.image
-                  }
+                  productData: requestData // Match the server parameter name
               })
           })
-              .then(res => res.json())
+              .then(res => {
+                  if (!res.ok) throw new Error("Network response was not ok");
+                  return res.json();
+              })
               .then(data => {
                   const result = data.d ? JSON.parse(data.d) : data;
                   if (result.success) {
-                      button.textContent = "Uploaded";
+                      button.textContent = "✓ Uploaded";
+                      button.classList.remove("uploading");
+                      button.classList.add("uploaded");
                       showToast(result.message, "success");
                   } else {
-                      button.textContent = "Upload";
-                      button.disabled = false;
-                      showToast("Error: " + result.message, "error");
+                      throw new Error(result.message || "Unknown error occurred");
                   }
               })
               .catch(err => {
                   console.error("Upload Error:", err);
                   button.textContent = "Upload";
                   button.disabled = false;
+                  button.classList.remove("uploading");
                   showToast("Upload failed: " + err.message, "error");
               });
       }
-      
   </script>
 
     <script>

@@ -346,7 +346,7 @@ function getProducts(category) {
                 const productDiv = document.createElement("div");
                 productDiv.className = "product-item";
                 productDiv.innerHTML = `
-                 <img id="product-image" src="wwwroot${product.image}" alt="${product.product_name}">
+                 <img id="product-image" src="${product.image}" alt="${product.product_name}">
                  <h3>${product.product_name}</h3>
                  <p>${product.description}</p>
                  <p>Price per 1/2Kg: ₹${product.price}</p>
@@ -414,7 +414,7 @@ function searchProducts() {
                     const div = document.createElement("div");
                     div.className = "product-item";
                     div.innerHTML = `
-                     <img id="product-image" src="wwwroot${product.image}" alt="${product.product_name}">
+                     <img id="product-image" src="${product.image}" alt="${product.product_name}">
                      <h3>${product.product_name}</h3>
                      <p>${product.description}</p>
                      <p>Price per 1/2Kg: ₹${product.price}</p>
@@ -471,7 +471,7 @@ function displayCartItems() {
 
                 cartItemsContainer.innerHTML += `
                      <div class='cart-item'>
-                         <img src="wwwroot${product.image}" width="80" height="80">
+                         <img src="${product.image}" width="80" height="80">
                          <span>${productName} - ${quantities[productName]} x ₹${product.price} = ₹${price}</span>
                      </div>
                  `;

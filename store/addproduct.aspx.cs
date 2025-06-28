@@ -1,4 +1,5 @@
-﻿using System;
+﻿
+using System;
 using System.Collections.Generic;
 using System.Web.Services;
 using System.Web.Script.Serialization;
@@ -21,89 +22,92 @@ namespace store
 
             try
             {
+                // Check if productData is null
+                if (productData == null)
+                {
+                    response["success"] = false;
+                    response["message"] = "No product data received.";
+                    return serializer.Serialize(response);
+                }
+
                 // Validate required fields
-                if (productData == null || !productData.ContainsKey("name") || string.IsNullOrWhiteSpace(productData["name"]?.ToString()))
+                if (!productData.ContainsKey("name") || string.IsNullOrEmpty(productData["name"]?.ToString()))
                 {
                     response["success"] = false;
                     response["message"] = "Product name is required.";
                     return serializer.Serialize(response);
                 }
 
-                string name = productData["name"].ToString();
-                string description = productData.ContainsKey("description") ? productData["description"]?.ToString() ?? "" : "";
-                string category = productData.ContainsKey("category") ? productData["category"]?.ToString() ?? "" : "";
-                string price = productData.ContainsKey("price") ? productData["price"]?.ToString() ?? "" : "";
-                string imageBase64 = productData.ContainsKey("image") ? productData["image"]?.ToString() : null;
+                string name = productData["name"].ToString().Trim();
+                string description = productData.ContainsKey("description") ? productData["description"]?.ToString()?.Trim() ?? "" : "";
+                string category = productData.ContainsKey("category") ? productData["category"]?.ToString()?.Trim() ?? "" : "";
 
-
-                if (price == "")
+                // Validate price
+                if (!productData.ContainsKey("price") || !decimal.TryParse(productData["price"].ToString(), out decimal price))
                 {
-                    response["success"] = true;
-                    response["message"] = "hello";
+                    response["success"] = false;
+                    response["message"] = "Invalid price format.";
                     return serializer.Serialize(response);
                 }
-                string savedImagePath = null;
 
-                // Handle base64 image
-                if (!string.IsNullOrEmpty(imageBase64))
+                string imagePath = null;
+                if (productData.ContainsKey("image") && productData["image"] != null)
                 {
+                    string imageBase64 = productData["image"].ToString();
+
+                    // Check if it's a data URL (might not be if coming from different client)
+                    if (imageBase64.StartsWith("data:image"))
+                    {
+                        imageBase64 = imageBase64.Substring(imageBase64.IndexOf(',') + 1);
+                    }
+
                     try
                     {
-                        string base64Data = imageBase64;
+                        byte[] imageBytes = Convert.FromBase64String(imageBase64);
+
+                        // Get file extension from the base64 header if available
                         string extension = "jpg"; // default
-
-                        if (imageBase64.Contains(","))
+                        if (productData["image"].ToString().StartsWith("data:image"))
                         {
-                            var parts = imageBase64.Split(',');
-                            base64Data = parts[1];
-
-                            var mimeType = parts[0].Split(';')[0].Split(':')[1]; // e.g., image/png
-                            extension = mimeType.Split('/')[1]; // e.g., png
+                            extension = productData["image"].ToString().Split(';')[0].Split('/')[1];
                         }
 
-                        byte[] imageBytes = Convert.FromBase64String(base64Data);
-                        string fileName = $"product_{Guid.NewGuid()}.{extension}";
-                        string relativePath = $"static/images/{fileName}";
-                        string fullPath = HostingEnvironment.MapPath("~/" + relativePath);
+                        string fileName = $"{name}.{extension}";
+                        string folderPath = HostingEnvironment.MapPath("~/static/images/");
 
-                        // Ensure directory exists
-                        string dirPath = Path.GetDirectoryName(fullPath);
-                        if (!Directory.Exists(dirPath))
-                        {
-                            Directory.CreateDirectory(dirPath);
-                        }
+                        if (!Directory.Exists(folderPath))
+                            Directory.CreateDirectory(folderPath);
 
-                        // Save the image
-                        File.WriteAllBytes(fullPath, imageBytes);
-                        savedImagePath = relativePath;
+                        string filePath = Path.Combine(folderPath, fileName);
+                        File.WriteAllBytes(filePath, imageBytes);
 
-                        response["savedImage"] = savedImagePath;
+                        imagePath = $"/static/images/{fileName}";
                     }
-                    catch (Exception imgEx)
+                    catch (Exception ex)
                     {
-                        response["imageError"] = "Failed to process image: " + imgEx.Message;
+                        response["success"] = false;
+                        response["message"] = $"Image processing failed: {ex.Message}";
+                        return serializer.Serialize(response);
                     }
                 }
 
-                // Final success response
+                // TODO: Add database insertion logic here
+
                 response["success"] = true;
                 response["message"] = $"Product '{name}' saved successfully.";
-                response["product"] = new
+                if (!string.IsNullOrEmpty(imagePath))
                 {
-                    name,
-                    description,
-                    category,
-                    price,
-                    image = savedImagePath ?? "No image"
-                };
+                    response["imagePath"] = imagePath;
+                }
 
                 return serializer.Serialize(response);
             }
             catch (Exception ex)
             {
-                // Log error internally if needed
+                System.Diagnostics.Trace.WriteLine($"Full error in AddProduct: {ex.ToString()}");
                 response["success"] = false;
-                response["message"] = "Internal server error. Please try again later.";
+                response["message"] = $"Internal server error: {ex.Message}";
+                response["stackTrace"] = ex.StackTrace; // Only for debugging!
                 return serializer.Serialize(response);
             }
         }
