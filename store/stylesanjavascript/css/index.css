@@ -372,6 +372,9 @@ input[type="email"] {
 }
 
 input[type="submit"],
+#show-contact-form,
+#close-contact-section,
+#close-contact,
 .close-contact,
 #close-login,
 #close-orders,
@@ -960,7 +963,7 @@ input[type="radio"] {
     border: solid #8affa3;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     z-index: 1000;
-    width: 500px;
+    width: 400px;
     opacity: 0;
     transition: transform 0.3s ease-out, opacity 0.3s ease-out;
 }
@@ -975,7 +978,7 @@ input[type="radio"] {
 @keyframes slideInRight {
     0% {
         opacity: 0;
-        transform: translate(-150%, -50%) scale(0.8);
+        transform: translate(-150%, -50%) scale(0.8)
     }
 
     100% {
@@ -991,18 +994,29 @@ input[type="radio"] {
 }
 
     .contact-content textarea {
+        height: 150px;
         background-color: #333;
         width: 100%;
         padding: 8px;
         border-radius: 5px;
         border: none;
         margin-bottom: 10px;
+        overflow-y: auto;
+        scrollbar-color: #2baa5b #1e1e1e;
+        scrollbar-width: thin;
+        scroll-behavior: smooth;
+        color: #8affa3;
+        outline: none;
     }
 
     .contact-content p {
         font-size: 16px;
         margin-bottom: 5px;
     }
+
+    input#show-contact-form ,input#close-contact-section{
+    margin-left: 10px;
+}
 
 /* Order section styling */
 .order-container {

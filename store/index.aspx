@@ -9,7 +9,7 @@
     <body>
         <nav id="navbar">
             <div class="logo">
-                <img src="wwwroot/static/images/elitegrocers_logo.jpg" />
+                <img src="static/images/elitegrocers_logo.jpg" />
                 <h2 class="logo-name">Elite Grocers</h2>
             </div>
             <input type="checkbox" id="menu-toggle" />
@@ -142,7 +142,7 @@
         <!--login-->
         <div class="login-container">
             <form id="login-form">
-                <img id="login-image" src="wwwroot/static/images/elitegrocers_logo.jpg" alt="logo" />
+                <img id="login-image" src="static/images/elitegrocers_logo.jpg" alt="logo" />
                 <p id="logintext">Elite Grocers</p>
                 <h1 class="h1">Login</h1>
                 <hr />
@@ -183,7 +183,7 @@
         <!--register-->
         <div class="register-container">
             <form id="sign-up-1">
-                  <img id="register-image" src="wwwroot/static/images/elitegrocers_logo.jpg" alt="logo" />
+                  <img id="register-image" src="static/images/elitegrocers_logo.jpg" alt="logo" />
   <p id="registertext">Elite Grocers</p>
   <h1 class="h1">Register</h1>
   <hr />
@@ -279,17 +279,25 @@
                 <h2>Contact Us</h2>
                 <p><strong>Phone:</strong> <span id="contact-number">+1 234 567 890</span></p>
                 <p><strong>Email:</strong> support@elitegrocers.com</p>
+                <p><strong>Address:</strong> 123 Main Street, City, Country</p>
+                <p>Or <input type="button" id="show-contact-form" value="Complaints" /><input type="button" id="close-contact-section" value="Close" /></p>
+                
+                <div id="complaint-form-container" style="display:none;">
                 <form id="contact-form">
                     <label for="contact-name">Name:</label>
-                    <input type="text" id="contact-name" placeholder="Your Name" required="required" />
+                    <input type="text" id="contact-name" placeholder="Your Name" />
                     <label for="contact-email">Email:</label>
-                    <input type="email" id="contact-email" placeholder="Your Email" required="required" />
+                    <input type="email" id="contact-email" placeholder="Your Email" />
+                    <label for="orderid">Order Id:</label>
+                    <input type="text" id="orderid" />
                     <label for="message">Message:</label>
-                    <textarea id="message" placeholder="Your Message" required="required"> </textarea>
+                    <textarea id="message" placeholder="Your Complaints" required="required"></textarea>
                     <input type="submit" value="Send" />
                     <div class="loading-icon" id="loading-icon3">⏳</div>
                     <button id="close-contact" class="close-contact">Close</button>
+
                 </form>
+            </div>
             </div>
         </div>
         <script src="stylesanjavascript/js/index.js"></script>

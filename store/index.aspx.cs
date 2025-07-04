@@ -399,8 +399,8 @@ namespace store
             var serializer = new JavaScriptSerializer { MaxJsonLength = int.MaxValue };
             return serializer.Serialize(productList);
         }
-    
-    [WebMethod(EnableSession = true)]
+
+        [WebMethod(EnableSession = true)]
         public static string LoginOrNot()
         {
             var serializer = new JavaScriptSerializer();
@@ -426,6 +426,64 @@ namespace store
                 return serializer.Serialize(new { status = "error", message = "An error occurred: " + ex.Message });
             }
         }
+
+
+        [WebMethod(EnableSession = true)]
+public static string submitComplaint()
+{
+    var serializer = new JavaScriptSerializer();
+
+    try
+    {
+        HttpContext context = HttpContext.Current;
+        context.Request.InputStream.Position = 0;
+
+        using (var reader = new System.IO.StreamReader(context.Request.InputStream))
+        {
+            string json = reader.ReadToEnd();
+            var data = serializer.Deserialize<Dictionary<string, string>>(json);
+
+            string username = context.Session["username"]?.ToString();
+            string email = context.Session["email"]?.ToString();
+
+            if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(email))
+            {
+                return serializer.Serialize(new { status = "error", message = "User not logged in." });
+            }
+
+            string name = data.ContainsKey("name") ? data["name"] : null;
+            string message = data.ContainsKey("message") ? data["message"] : null;
+            string orderid = data.ContainsKey("orderid") ? data["orderid"] : null;
+
+            if (string.IsNullOrEmpty(name) || string.IsNullOrEmpty(message) || string.IsNullOrEmpty(orderid))
+            {
+                return serializer.Serialize(new { status = "error", message = "All fields are required." });
+            }
+                    var client = new MongoClient(connectionString);
+                    var database = client.GetDatabase("myLoginDatabase");
+                    var complaintsCollection = database.GetCollection<BsonDocument>("Complaints");
+
+            var complaintDoc = new BsonDocument
+            {
+                { "username", username },
+                { "email", email },
+                { "name", name },
+                { "message", message },
+                { "orderid", orderid },
+                { "submittedAt", DateTime.UtcNow }
+            };
+
+            complaintsCollection.InsertOne(complaintDoc);
+
+            return serializer.Serialize(new { status = "success", message = "Complaint submitted successfully." });
+        }
+    }
+    catch (Exception ex)
+    {
+        return serializer.Serialize(new { status = "error", message = "An error occurred: " + ex.Message });
+    }
+}
+
 
 
     }

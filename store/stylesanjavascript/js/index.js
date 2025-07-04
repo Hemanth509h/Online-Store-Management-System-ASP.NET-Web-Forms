@@ -523,7 +523,8 @@ checkoutButton.addEventListener("click", async () => {
     });
 
     const result = await response.json();
-    const data = result.d; // WebMethod response is nested under `d`
+       const data = JSON.parse(result.d);      // WebMethod response is nested under `d`
+       // WebMethod response is nested under `d`
 
     if (data.status === "error" && data.message === "User is not logged in.") {
         showToast("Please login to proceed with checkout.", "error");
@@ -644,9 +645,16 @@ confirmOrderButton.addEventListener("click", () => {
 //Contact section
 const contactLink = document.getElementById("contact-link");
 const contactSection = document.getElementById("contact-section");
-const closeContactButton = document.getElementById("close-contact");
+const closeContactSectionBtn = document.getElementById("close-contact-section");
 
-contactLink.addEventListener("click", () => {
+const showFormBtn = document.getElementById("show-contact-form");
+const formContainer = document.getElementById("complaint-form-container");
+const closeFormBtn = document.getElementById("close-contact");
+const form = document.getElementById("contact-form");
+const loadingIcon = document.getElementById("loading-icon3");
+
+// Show/hide contact section
+contactLink?.addEventListener("click", () => {
     if (contactSection.style.display === "block") {
         contactSection.classList.remove("show");
         contactSection.style.animation = "fadeOutRight 0.4s forwards";
@@ -663,7 +671,7 @@ contactLink.addEventListener("click", () => {
     }
 });
 
-closeContactButton.addEventListener("click", function () {
+closeContactSectionBtn.addEventListener("click", () => {
     contactSection.style.animation = "fadeOutRight 0.4s forwards";
     setTimeout(() => {
         contactSection.classList.remove("show");
@@ -672,20 +680,41 @@ closeContactButton.addEventListener("click", function () {
     }, 350);
 });
 
-document.getElementById("contact-form").addEventListener("submit", function (event) {
-    event.preventDefault();
+// Show/hide complaint form
+showFormBtn.addEventListener("click", () => {
+    formContainer.style.display = "block";
+});
+
+closeFormBtn.addEventListener("click", () => {
+    formContainer.style.display = "none";
+    
+});
+
+// Submit complaint form
+form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    loadingIcon.style.display = "inline-block";
 
     const name = document.getElementById("contact-name").value.trim();
     const email = document.getElementById("contact-email").value.trim();
     const message = document.getElementById("message").value.trim();
+  const orderid = document.getElementById("orderid").value.trim();
 
-    if (name === "" || email === "" || message === "") {
-        showToast("Please fill in all fields.", "error");
-        return;
+
+    const response = await fetch('index.aspx/submitComplaint', {
+         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, message, orderid })
+    });
+    const result = await response.json();
+     const data = JSON.parse(result.d);
+
+    loadingIcon.style.display = "none";
+    showToast(data.message, data.status);
+    if (data.status === "success") {
+        form.reset();
+        formContainer.style.display = "none";
     }
-
-    showToast("Message sent successfully!", "success");
-    document.getElementById("contact-form").reset();
 });
 
 //Order
@@ -705,7 +734,7 @@ if (orderLink) {
     });
 
     const result = await response.json();
-    const data = result.d; // WebMethod response is nested under `d`
+     const data = JSON.parse(result.d);      // WebMethod response is nested under `d`
 
     if (data.status === "error" && data.message === "User is not logged in.") {
         showToast("Please login to see your orders.", "error");
