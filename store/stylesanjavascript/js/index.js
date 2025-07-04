@@ -511,9 +511,21 @@ const checkoutModal = document.getElementById("checkout-modal");
 const closeCheckoutButton = document.getElementById("close-checkout");
 const confirmOrderButton = document.getElementById("confirm-order");
 
-checkoutButton.addEventListener("click", () => {
-    const username = document.getElementById("usernameforplaceorder").textContent.trim();
-    if (username == "") {
+
+checkoutButton.addEventListener("click", async () => {
+   try {
+    const response = await fetch("index.aspx/LoginOrNot", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json; charset=utf-8"
+        },
+        body: JSON.stringify({}) // Empty body since this method doesn't need input
+    });
+
+    const result = await response.json();
+    const data = result.d; // WebMethod response is nested under `d`
+
+    if (data.status === "error" && data.message === "User is not logged in.") {
         showToast("Please login to proceed with checkout.", "error");
         cartModal.classList.remove("show");
         cartModal.style.animation = "fadeOutDown 0.4s forwards";
@@ -529,15 +541,19 @@ checkoutButton.addEventListener("click", () => {
         return;
     }
 
-    if (Object.values(quantities).some((quantity) => quantity > 0)) {
-        // Open checkout modal
-        checkoutModal.style.display = "block";
-        checkoutModal.style.animation = "";
-        setTimeout(() => {
-            checkoutModal.classList.add("show");
-        }, 10);
-    } else {
-        showToast("Your cart is empty. Add items to proceed.", "error");
+        if (Object.values(quantities).some((quantity) => quantity > 0)) {
+            checkoutModal.style.display = "block";
+            checkoutModal.style.animation = "";
+            setTimeout(() => {
+                checkoutModal.classList.add("show");
+            }, 10);
+        } else {
+            showToast("Your cart is empty. Add items to proceed.", "error");
+        }
+
+    } catch (err) {
+        console.error(err);
+        showToast("Something went wrong. Please try again later.", "error");
     }
 });
 
@@ -678,7 +694,36 @@ const orderSection = document.getElementById("order-section");
 const orderList = document.getElementById("order-list");
 
 if (orderLink) {
-    orderLink.addEventListener("click", () => {
+    orderLink.addEventListener("click", async() => {
+ try {
+    const response = await fetch("index.aspx/LoginOrNot", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json; charset=utf-8"
+        },
+        body: JSON.stringify({}) // Empty body since this method doesn't need input
+    });
+
+    const result = await response.json();
+    const data = result.d; // WebMethod response is nested under `d`
+
+    if (data.status === "error" && data.message === "User is not logged in.") {
+        showToast("Please login to see your orders.", "error");
+        
+        loginContainer.style.display = "block";
+        setTimeout(() => {
+            loginContainer.style.opacity = "1";
+            loginContainer.style.transform = "translate(-50%, -50%) scale(1)";
+        }, 10);
+        return;
+    }
+ } catch (err) {
+        console.error(err);
+        showToast("Something went wrong. Please try again later.", "error");
+    }
+
+
+
         fetch("index.aspx/orders", {
             method: "POST",
             headers: {
@@ -688,16 +733,8 @@ if (orderLink) {
         })
             .then((response) => response.json())
             .then((data) => {
-                const result = JSON.parse(data.d);
-                if (result.status === "error") {
-                    showToast(result.message, "error");
-                    loginContainer.style.display = "block";
-                    setTimeout(() => {
-                        loginContainer.style.opacity = "1";
-                        loginContainer.style.transform = "translate(-50%, -50%) scale(1)";
-                    }, 10);
-                    return;
-                }
+              
+                const result = JSON.parse(data.d);  
                 orderList.innerHTML = "";
                 result.orders.reverse().forEach((order) => {
                     const orderDiv = document.createElement("div");
@@ -705,6 +742,8 @@ if (orderLink) {
                     orderDiv.innerHTML = `
                      <h3>Order ID: ${order._id}</h3>
                      <p>Date: ${new Date(order.orderDate).toLocaleString()}</p>
+                     <p>User Name: ${order.username}</p>
+                <p>Email : ${order.email}</p>
                      <p>Status: ${order.status}</p>
                      <p>Total Price: ₹${order.totalPrice}</p>
                      <p>Phone Number: ${order.phone_number}</p>

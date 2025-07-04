@@ -139,7 +139,7 @@ namespace store
 
                         if (isPasswordValid)
                         {
-                           
+
                             string username = userDoc["username"].AsString;
                             string email = userDoc["email"].AsString;
                             string userRole = userDoc.Contains("role") ? userDoc["role"].AsString : "customer";
@@ -151,18 +151,18 @@ namespace store
                             context.Session["username"] = username;
                             context.Session["email"] = email;
 
-                            if(userRole == "customer")
+                            if (userRole == "customer")
                             {
                                 string fullname = userDoc["fullname"].AsString;
                                 context.Session["fullname"] = fullname;
 
                             }
-                           
+
                             if (userRole == "distributor")
                             {
                                 string distributorname = userDoc["distributorname"].AsString;
                                 string pincode1 = userDoc["pincode"].AsString;
-                                if(pincode1 != pincode)
+                                if (pincode1 != pincode)
                                 {
                                     return serializer.Serialize(new { status = "error", message = "Invalid pincode for this user." });
                                 }
@@ -284,7 +284,10 @@ namespace store
 
                 var filter = Builders<BsonDocument>.Filter.Eq("username", username);
                 var orders = ordersCollection.Find(filter).ToList();
-
+                if (orders.Count == 0)
+                {
+                    return serializer.Serialize(new { status = "success", message = "No orders found for this user." });
+                }
                 var orderList = new List<Dictionary<string, object>>();
 
                 foreach (var order in orders)
@@ -353,11 +356,12 @@ namespace store
             var serializer = new JavaScriptSerializer { MaxJsonLength = Int32.MaxValue };
             return serializer.Serialize(productList);
         }
+
         [WebMethod]
         public static string SearchProducts(string query)
         {
             var client = new MongoClient(connectionString);
-            var database = client.GetDatabase("grocery_store");         
+            var database = client.GetDatabase("grocery_store");
             var collections = new List<string>
     {
         "Fresh_Produce", "Dairy_Eggs", "Meat_Seafood", "Bakery_Bread",
@@ -395,5 +399,34 @@ namespace store
             var serializer = new JavaScriptSerializer { MaxJsonLength = int.MaxValue };
             return serializer.Serialize(productList);
         }
+    
+    [WebMethod(EnableSession = true)]
+        public static string LoginOrNot()
+        {
+            var serializer = new JavaScriptSerializer();
+            try
+            {
+                HttpContext context = HttpContext.Current;
+                string username = context.Session["username"]?.ToString();
+                string email = context.Session["email"]?.ToString();
+
+                if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(email))
+                {
+                    return serializer.Serialize(new { status = "error", message = "User is not logged in." });
+                }
+
+                return serializer.Serialize(new
+                {
+                    status = "success",
+                    message = "User is logged in."
+                });
+            }
+            catch (Exception ex)
+            {
+                return serializer.Serialize(new { status = "error", message = "An error occurred: " + ex.Message });
+            }
+        }
+
+
     }
 }
