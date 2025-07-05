@@ -20,7 +20,7 @@
         intervalId = setInterval(todayorders, 60000);
     });
 
-    let lastOrderCount = 0;write an add 
+    let lastOrderCount = 0;
     function fetchOrders() {
         fetch("distributor.aspx/GetOrders", {
             method: "POST",
