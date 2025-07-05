@@ -20,9 +20,9 @@
         intervalId = setInterval(todayorders, 60000);
     });
 
-    let lastOrderCount = 0;
+    let lastOrderCount = 0;write an add 
     function fetchOrders() {
-        fetch("admin.aspx/GetOrders", {
+        fetch("distributor.aspx/GetOrders", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -101,7 +101,7 @@
     }
 
     function todayorders() {
-        fetch("admin.aspx/TodayOrders", {
+        fetch("distributor.aspx/TodayOrders", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",

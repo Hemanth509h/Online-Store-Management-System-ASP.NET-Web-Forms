@@ -25,48 +25,63 @@ namespace store
         [WebMethod(EnableSession = true)]
         public static string GetOrders()
         {
-            var context = HttpContext.Current;
-            var sessionPincode = context.Session["pincode"]?.ToString();
-
-            var result = new Dictionary<string, List<Dictionary<string, object>>>();
-
-            if (string.IsNullOrEmpty(sessionPincode))
-            {
-                return new JavaScriptSerializer().Serialize(new
-                {
-                    status = "error",
-                    message = "Pincode not found in session."
-                });
-            }
-
-            var filter = Builders<BsonDocument>.Filter.Eq("pincode", sessionPincode);
-            var docs = orders.Find(filter).ToList();
+            var ordersList = new List<Dictionary<string, object>>();
+            var docs = orders.Find(_ => true).ToList();
 
             foreach (var doc in docs)
             {
-                string pincode = doc.GetValue("pincode", "").ToString();
-                if (!result.ContainsKey(pincode))
-                    result[pincode] = new List<Dictionary<string, object>>();
-
                 var order = new Dictionary<string, object>();
                 foreach (var el in doc.Elements)
                 {
                     if (el.Name == "_id")
-                    {
                         order[el.Name] = el.Value.ToString();
-                    }
                     else
-                    {
                         order[el.Name] = BsonValueToDotNet(el.Value);
-                    }
                 }
-                result[pincode].Add(order);
+                ordersList.Add(order);
             }
 
-            var json = new JavaScriptSerializer().Serialize(new { orders_by_pincode = result });
+            var json = new JavaScriptSerializer().Serialize(new { orders = ordersList });
             return json;
         }
+        [WebMethod]
+        public static string TodayOrders()
+        {
+            var today = DateTime.UtcNow.Date; // UTC today date at midnight
 
+            var ordersList = new List<Dictionary<string, object>>();
+            var docs = orders.Find(_ => true).ToList();
+
+            foreach (var doc in docs)
+            {
+                var orderDateValue = doc.GetValue("orderDate", null);
+                if (orderDateValue != null)
+                {
+                    DateTime orderDate;
+
+                    // Try parsing the ISO8601 string with timezone info
+                    if (DateTime.TryParse(orderDateValue.ToString(), out orderDate))
+                    {
+                        // Compare only the date part (ignore time)
+                        if (orderDate.Date == today)
+                        {
+                            var order = new Dictionary<string, object>();
+                            foreach (var el in doc.Elements)
+                            {
+                                if (el.Name == "_id")
+                                    order[el.Name] = el.Value.ToString();
+                                else
+                                    order[el.Name] = BsonValueToDotNet(el.Value);
+                            }
+                            ordersList.Add(order);
+                        }
+                    }
+                }
+            }
+
+            var json = new JavaScriptSerializer().Serialize(new { orders = ordersList });
+            return json;
+        }
 
         [WebMethod]
         public static void UpdateOrderStatus(string orderId, string status)
