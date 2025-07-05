@@ -10,7 +10,7 @@
     <body>
         <nav id="navbar">
             <div class="logo">
-                <img src="wwwroot/static/images/elitegrocers_logo.jpg" />
+                <img src="static/images/elitegrocers_logo.jpg" />
                 <h2 class="logo-name">Elite Grocers</h2>
             </div>
             <input type="checkbox" id="menu-toggle" />
